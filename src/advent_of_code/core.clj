@@ -1,5 +1,7 @@
 (ns advent-of-code.core
-  (:require [digest :as digest]))
+  (:require [digest :as digest]
+            [clojure.java.io :as io]
+            [clojure.string :as string]))
 
 ;; #1^M
 ;;
@@ -157,3 +159,66 @@
       ;; (println p)
       (update-in-grid grid (vector (Integer. ci-x) (Integer. ci-y)) (vector (Integer. cd-x) (Integer. cd-y)) (get actions c)))
     grid))
+
+;; #6
+
+(def command-pattern (re-pattern #"^([\p{Lower}\d]+)\s+(\p{Upper}+)\s([\p{Lower}\d]+)\s->\s(\p{Lower}+)"))
+(def assign-pattern (re-pattern #"^([\p{Lower}\d]+)\s->\s(\p{Lower}+)"))
+(def not-pattern (re-pattern #"^(NOT)\s([a-z\d]+)\s->\s([a-z]+)"))
+(def is-positive-integer? (comp empty? (partial drop-while #(Character/isDigit %))))
+
+(defn wire-fn
+  "wires is always a vector"
+  [f wires wire-map]
+  ;; (println (str wire-map))
+  (when ((complement some) nil? (map (comp (partial get wire-map) keyword)
+                                     (filter (complement is-positive-integer?) wires)))
+    (let [b (apply f (map #(if (is-positive-integer? %)
+                              (Integer. %)
+                              (get wire-map (keyword %))) wires))]
+      (if (neg? b) (+ 65536 b) b))))
+
+(def ops {"AND" (partial wire-fn bit-and)
+          "OR" (partial wire-fn bit-or)
+          "NOT" (partial wire-fn bit-not)
+          "LSHIFT" (partial wire-fn bit-shift-left)
+          "RSHIFT" (partial wire-fn bit-shift-right)
+          "ID" (partial wire-fn identity)})
+
+(defn parse-circuit-line [line]
+  (let [[op wires output] (or (when-let [[_ input output] (re-matches assign-pattern line)]
+                                ["ID" [input] output])
+                              (when-let [[_ in1 command in2 output] (re-matches command-pattern line)]
+                                [command [in1 in2] output])
+                              (when-let [[_ command input output] (re-matches not-pattern line)]
+                                [command [input] output])
+                              (throw (ex-info "bad times, vole" {:line line})))]
+    {:op op
+     :inputs wires
+     :output output}))
+
+(defn op-fn [{:keys [op inputs output]} wire-map]
+  (if-let [res ((get ops op) inputs wire-map)]
+    (assoc wire-map (keyword output) res)
+    wire-map))
+
+;; #8
+
+(defn hex-string->dec [hs]
+  (let [hex-map (zipmap 
+                  (concat
+                    (map (comp keyword str) (range 0 10))
+                    (map (comp keyword str char) (range 97 103))
+                    (map (comp keyword str char) (range 65 71)))
+                  (concat (range 16) (range 10 16)))]
+    ;; (println (str hex-map))
+    (reduce #(+ (* 16 %1) (get hex-map ((comp keyword str) %2))) 0 hs)))
+
+(defn decode-xs [s]
+  (let [xs (map second (re-seq #"\\x([a-f0-9]{2})" s))
+        x-map (zipmap xs (map (comp str char hex-string->dec) xs))]
+    (reduce #(string/replace-first %1 (re-pattern (str "\\\\x" %2)) (string/re-quote-replacement (get x-map %2))) s xs)))
+
+(defn decode-otros [s]
+  (-> (string/replace s #"\\\"" "\"")
+      (string/replace #"[\\]{2}" (str (char 92) (char 92)))))
