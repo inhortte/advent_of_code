@@ -1,7 +1,8 @@
 (ns advent-of-code.core
   (:require [digest :as digest]
             [clojure.java.io :as io]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [clojure.math.combinatorics :as combo]))
 
 ;; #1^M
 ;;
@@ -222,3 +223,29 @@
 (defn decode-otros [s]
   (-> (string/replace s #"\\\"" "\"")
       (string/replace #"[\\]{2}" (str (char 92) (char 92)))))
+
+;; #9
+
+;; (def city-distances (string/split (slurp "resources/cities.txt") #"\n"))
+;; (def city-map (reduce (fn [res line]
+;;x                        (let [[_ city1 city2 d] (re-matches #"^(\w+)\sto\s(\w+)\s=\s(\d+)" line)]
+;;                           (-> (update-in res [:cities] conj (keyword city1) (keyword city2))
+;;                               (assoc-in [:distances (vector (keyword city1) (keyword city2))] (Integer. d))
+;;                               (assoc-in [:distances (vector (keyword city2) (keyword city1))] (Integer. d)))))
+;;                       {:cities #{} :distances {}}
+;;                       city-distances))
+;; (def city-perms (combo/permutations (:cities city-map)))
+
+;; find minimal distance in a circuit through all cities
+;; (apply min (map (comp (partial reduce + ) (fn [path] (map (comp (partial (:distances city-map)) vec) (partition 2 1 path)))) city-perms)))
+
+;; 10
+
+(defn look-and-say
+  "n is a STRING!"
+  [n]
+  (letfn [(count-um-up [n]
+            (map #(hash-map :el (first %) :count (count %))
+                 (partition-by identity n)))]
+    (->> (reduce #(conj %1 (:count %2) (:el %2)) [] (count-um-up n))
+      (apply str))))
