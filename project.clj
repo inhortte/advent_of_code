@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0-RC2"]
                  [digest "1.4.4"]
-                 [org.clojure/math.combinatorics "0.1.1"]]
+                 [org.clojure/data.json "0.2.6"]]
   :main ^:skip-aot advent-of-code.core
   :profiles {:dev {:dependencies [[speclj "3.3.1"]]}}
   :plugins [[speclj "3.3.1"]]
