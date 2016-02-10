@@ -207,7 +207,7 @@
 ;; #8
 
 (defn hex-string->dec [hs]
-  (let [hex-map (zipmap 
+  (let [hex-map (zipmap
                   (concat
                     (map (comp keyword str) (range 0 10))
                     (map (comp keyword str char) (range 97 103))
@@ -394,7 +394,7 @@
 (def ingr-archivo "resources/ingr-list.txt")
 (defn ingr-parse [archivo]
   (reduce (fn [ingrs ingr]
-            (let [[_ n cap d f t cal] (re-matches 
+            (let [[_ n cap d f t cal] (re-matches
                                         #"^(\w+): capacity ([-\d]+), durability ([-\d]+), flavor ([-\d]+), texture ([-\d]+), calories ([-\d]+)$"
                                         ingr)]
               (assoc ingrs (keyword n) [(Integer. cap) (Integer. d) (Integer. f) (Integer. t) (Integer. cal)])))
@@ -620,7 +620,7 @@
   Object
   (toString [this]
     (str name " tiene " (:hp this) " puntas de pelea residual.\n"
-         "Tiene " (:mana this) " puntas de mana residual.\n" 
+         "Tiene " (:mana this) " puntas de mana residual.\n"
          "Su cantidad de daño es "
          (:damage this) " y de blindaje " (:armour this) ".\n"
          "Utilizó " spent-mana " de mana.")))
@@ -652,7 +652,7 @@
 (defn clean-effects [{:keys [effects] :as w}]
   (reduce (fn [w ef-kw]
             (if (zero? (get-in effects [ef-kw :d]))
-              (-> w 
+              (-> w
                   (assoc :effects (dissoc (:effects w) ef-kw)))
               w))
           w (keys effects)))
@@ -761,7 +761,7 @@
         (recur (execute))))))
 
 (def instr-args-xform
-  (map #(cond (re-find #"^[ab]$" %) (keyword %) 
+  (map #(cond (re-find #"^[ab]$" %) (keyword %)
               (re-find #"^[0-9+-]+" %) (Integer. %)
               :pylorus %)))
 
@@ -795,4 +795,13 @@
 (def pesos-xform (map #(Integer. %)))
 (def pesos-de-paquetes (into [] pesos-xform (string/split-lines (slurp quantum-archivo))))
 
+;; #25
 
+(defn next-code [c]
+  (mod (* c 252533) 33554393))
+
+(defn next-cell [[y x]]
+  (vector (if (zero? y) (inc x) (dec y))
+          (if (zero? y) 0 (inc x))))
+
+(defn cell-map [])
